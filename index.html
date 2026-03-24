@@ -264,7 +264,7 @@ priority: 최우선|2순위|3순위 / timeframe: 단기|중기|장기 / priority
 let apiKey=sessionStorage.getItem('bi_key')||'',currentData=null,activeTab=0;
 const TABS=['개요','문제 재정의','세그먼트','기회 매트릭스','경쟁사 맹점','전략 방향','마케팅 전략'];
 const PHASES=['분석 준비 중...','시장 데이터 수집 중...','경쟁 구도 파악 중...','세그먼트 평가 중...','전략 방향 도출 중...','인사이트 합성 중...'];
-const MODELS=['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'];
+const MODELS=['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest'];
 const PRI_C={'최우선':'#b8860b','2순위':'#4fb3f6','3순위':'#888'};
 const TF_C={'단기':'#16a34a','중기':'#d97706','장기':'#dc2626'};
 const CH_C={'높음':'#16a34a','중간':'#d97706','낮음':'#888'};
@@ -284,7 +284,7 @@ async function fetchBrandIntel(brandName){
   let lastErr=null;
   for(const model of MODELS){
     setStatus(model+' 분석 중...');
-    const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;
+    const url='https://generativelanguage.googleapis.com/v1/models/'+model+':generateContent?key='+apiKey;
     let res,data;
     try{
       res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
