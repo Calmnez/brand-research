@@ -215,7 +215,7 @@
   </div>
 </div>
 <script>
-const SYSTEM_PROMPT = `당신은 맥킨지 수준 브랜드 전략 컨설턴트입니다. 반드시 순수 JSON만 반환하세요. 마크다운 백틱 금지. name/hq/founded 제외 모든 텍스트는 한국어.
+const SYSTEM_PROMPT = `당신은 맥킨지 수준 브랜드·서비스 전략 컨설턴트입니다. 브랜드명, 기업명, 또는 특정 서비스/제품명(예: 카카오 선물하기, 토스 증권, 배민 B마트)이 주어지면 해당 단위로 분석하세요. 반드시 유효한 JSON만 반환하세요. 마크다운 백틱 금지. 문자열 값 안에 큰따옴표(\") 절대 사용 금지 — 작은따옴표나 다른 표현 사용. name/hq/founded 제외 모든 텍스트는 한국어.
 
 {
   "name":"브랜드명","tagline":"포지셔닝","sector":"산업","founded":"연도","hq":"위치",
@@ -376,7 +376,41 @@ function aggressiveJsonClean(raw) {
 function repairJson(raw) {
   return aggressiveJsonClean(raw);
 }
-async function fetchBrandIntel(brandName){const fp=SYSTEM_PROMPT+'\n\n---\n다음 브랜드를 분석하세요: '+brandName+'\n순수 JSON만 반환하세요.';let lastErr=null;for(const model of MODELS){setStatus(model+' 분석 중...');const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;let res,data;try{res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:fp}]}],generationConfig:{temperature:.3,maxOutputTokens:8192}})});data=await res.json();}catch(e){throw new Error('네트워크 오류: https:// 주소에서 실행해주세요. ('+e.message+')');}if(!res.ok){const msg=data?.error?.message||('HTTP '+res.status);if((res.status===400||res.status===401||res.status===403)&&(msg.toLowerCase().includes('api key')||msg.toLowerCase().includes('invalid')))throw new Error('API 키 오류: '+msg);console.warn(model,res.status,msg.slice(0,100));lastErr=new Error(msg);continue;}const text=(data?.candidates?.[0]?.content?.parts||[]).filter(p=>typeof p.text==='string').map(p=>p.text).join('').trim();if(!text){lastErr=new Error('응답 없음 ('+data?.candidates?.[0]?.finishReason+')');continue;}return repairJson(text);}throw new Error('분석 실패: '+(lastErr?.message||'모든 모델 소진'));}
+async function fetchBrandIntel(brandName){
+  const fp = SYSTEM_PROMPT + '\n\n---\n다음 브랜드 또는 서비스를 분석하세요: ' + brandName + '\n반드시 유효한 JSON만 반환하세요. 문자열 안에 큰따옴표 사용 금지.';
+  let lastErr = null;
+  // Try with JSON mode first, then without
+  const attempts = [
+    {model:'gemini-2.5-flash', jsonMode:true},
+    {model:'gemini-1.5-flash', jsonMode:true},
+    {model:'gemini-1.5-flash-8b', jsonMode:true},
+    {model:'gemini-2.5-flash', jsonMode:false},
+    {model:'gemini-1.5-flash', jsonMode:false},
+  ];
+  for(const {model, jsonMode} of attempts){
+    setStatus(model + (jsonMode?' (JSON모드)':'') + ' 분석 중...');
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;
+    const genConfig = jsonMode
+      ? {temperature:.3, maxOutputTokens:8192, responseMimeType:'application/json'}
+      : {temperature:.3, maxOutputTokens:8192};
+    let res,data;
+    try{
+      res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:fp}]}],generationConfig:genConfig})});
+      data=await res.json();
+    }catch(e){throw new Error('네트워크 오류: https:// 주소에서 실행해주세요. ('+e.message+')');}
+    if(!res.ok){
+      const msg=data?.error?.message||('HTTP '+res.status);
+      if((res.status===400||res.status===401||res.status===403)&&(msg.toLowerCase().includes('api key')||msg.toLowerCase().includes('invalid')))throw new Error('API 키 오류: '+msg);
+      console.warn(model,'jsonMode='+jsonMode,res.status,msg.slice(0,120));
+      lastErr=new Error(msg); continue;
+    }
+    const text=(data?.candidates?.[0]?.content?.parts||[]).filter(p=>typeof p.text==='string').map(p=>p.text).join('').trim();
+    if(!text){lastErr=new Error('응답 없음 ('+data?.candidates?.[0]?.finishReason+')');continue;}
+    try{const result=repairJson(text);return result;}catch(e){lastErr=e;console.warn('parse fail',e.message.slice(0,100));continue;}
+  }
+  throw new Error('분석 실패: '+(lastErr?.message||'모든 시도 소진'));
+}
 
 let phaseTimer=null;
 function setStatus(t){document.getElementById('status-txt').textContent=t;}
