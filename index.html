@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>브랜드 인텔리전스 터미널</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/jsonrepair@3.8.0/lib/umd/index.umd.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     html,body{min-height:100%;background:#F5F4EF;color:#1a1a17;font-family:"Pretendard",-apple-system,sans-serif;}
@@ -278,10 +279,10 @@ function toggleVis(){const i=document.getElementById('api-key-input'),b=document
 function saveKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('API 키를 입력하세요.');return;}sessionStorage.setItem('bi_key',k);apiKey=k;showApp();document.getElementById('q').focus();}
 document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey();});
 
-function aggressiveJsonClean(raw) {
-  // Step 1: strip markdown fences
+function repairJson(raw) {
+  // Strip markdown fences
   let s = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-  // Step 2: find outermost { }
+  // Find outermost { }
   const st = s.indexOf('{');
   if (st === -1) throw new Error('JSON 블록 없음');
   let depth = 0, inStr = false, esc = false, end = -1;
@@ -294,87 +295,40 @@ function aggressiveJsonClean(raw) {
     if (c === '{') depth++;
     else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
   }
-  let candidate = end !== -1 ? s.slice(st, end + 1) : s.slice(st);
-  // Step 3: direct parse
+  const candidate = end !== -1 ? s.slice(st, end + 1) : s.slice(st);
+  // Try direct parse
   try { return JSON.parse(candidate); } catch (_) {}
-  // Step 4: fix common issues — remove literal newlines/tabs inside strings, fix unescaped quotes
-  let cleaned = '';
-  inStr = false; esc = false;
+  // Use jsonrepair library if available
+  if (typeof jsonrepair !== 'undefined') {
+    try { return JSON.parse(jsonrepair(candidate)); } catch (_) {}
+    try { return JSON.parse(jsonrepair(s)); } catch (_) {}
+  }
+  // Manual fallback: escape unescaped quotes inside string values
+  let fixed = '';
+  let inString = false, escaped = false;
   for (let i = 0; i < candidate.length; i++) {
     const c = candidate[i];
-    if (esc) { cleaned += c; esc = false; continue; }
-    if (c === '\\') { cleaned += c; if (inStr) esc = true; continue; }
-    if (c === '"') { inStr = !inStr; cleaned += c; continue; }
-    if (inStr) {
-      if (c === '\n' || c === '\r') { cleaned += ' '; continue; }
-      if (c === '\t') { cleaned += ' '; continue; }
-      // Check for unescaped quote: look ahead to see if context suggests it's mid-string
-      cleaned += c;
-    } else {
-      cleaned += c;
+    if (escaped) { fixed += c; escaped = false; continue; }
+    if (c === '\\') { fixed += c; if (inString) escaped = true; continue; }
+    if (c === '"') {
+      if (!inString) { inString = true; fixed += c; continue; }
+      // Determine if this closes the string
+      let j = i + 1;
+      while (j < candidate.length && candidate[j] === ' ') j++;
+      const nx = candidate[j];
+      if (!nx || nx === ',' || nx === '}' || nx === ']' || nx === '\n' || nx === '\r' || nx === ':') {
+        inString = false; fixed += c;
+      } else { fixed += '\\"'; }
+      continue;
     }
+    if (inString && (c === '\n' || c === '\r')) { fixed += ' '; continue; }
+    fixed += c;
   }
-  try { return JSON.parse(cleaned); } catch (_) {}
-  // Step 5: aggressive — replace all " inside string values with escaped version
-  // Use a state machine to identify string boundaries precisely
-  let result = '';
-  let state = 'OUT'; // OUT, KEY, COLON, VAL
-  let buf = '';
-  let i = 0;
-  while (i < cleaned.length) {
-    const c = cleaned[i];
-    if (state === 'OUT' || state === 'KEY' || state === 'VAL') {
-      if (c === '"') {
-        // Start of string — collect until closing quote
-        let str = '"';
-        i++;
-        let innerEsc = false;
-        while (i < cleaned.length) {
-          const sc = cleaned[i];
-          if (innerEsc) { str += sc; innerEsc = false; i++; continue; }
-          if (sc === '\\') { str += sc; innerEsc = true; i++; continue; }
-          if (sc === '"') {
-            // Check if this really closes the string
-            let j = i + 1;
-            while (j < cleaned.length && (cleaned[j] === ' ' || cleaned[j] === '\t')) j++;
-            const nx = cleaned[j];
-            if (nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '\n' || nx === '\r' || j >= cleaned.length) {
-              str += '"'; i++; break;
-            } else {
-              // Unescaped interior quote — escape it
-              str += '\\"'; i++; continue;
-            }
-          }
-          str += sc; i++;
-        }
-        result += str;
-        continue;
-      } else {
-        result += c;
-      }
-    }
-    i++;
+  try { return JSON.parse(fixed); } catch (_) {}
+  if (typeof jsonrepair !== 'undefined') {
+    try { return JSON.parse(jsonrepair(fixed)); } catch (_) {}
   }
-  try { return JSON.parse(result); } catch (_) {}
-  // Step 6: truncation recovery
-  let t = cleaned.replace(/,\s*$/, '').replace(/:\s*$/, ': ""');
-  let br = 0, bk = 0; inStr = false; esc = false;
-  for (const c of t) {
-    if (esc) { esc = false; continue; }
-    if (c === '\\' && inStr) { esc = true; continue; }
-    if (c === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (c === '{') br++; else if (c === '}') br--;
-    else if (c === '[') bk++; else if (c === ']') bk--;
-  }
-  if (inStr) t += '"';
-  t += ']'.repeat(Math.max(0, bk));
-  t += '}'.repeat(Math.max(0, br));
-  try { return JSON.parse(t); } catch (e) { throw new Error('JSON 파싱 실패: ' + e.message); }
-}
-
-function repairJson(raw) {
-  return aggressiveJsonClean(raw);
+  throw new Error('JSON 파싱 실패 — 다시 시도해주세요.');
 }
 async function fetchBrandIntel(brandName){
   const fp = SYSTEM_PROMPT + '\n\n---\n다음 브랜드 또는 서비스를 분석하세요: ' + brandName + '\n반드시 유효한 JSON만 반환하세요. 문자열 안에 큰따옴표 사용 금지.';
