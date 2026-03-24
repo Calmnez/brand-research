@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -258,7 +259,7 @@ const SYSTEM_PROMPT = `당신은 맥킨지 수준 브랜드 전략 컨설턴트�
   "swot":{"strengths":["강점1","강점2","강점3"],"weaknesses":["약점1","약점2"],"opportunities_list":["기회1","기회2"],"threats":["위협1","위협2"]},
   "key_insight":"비자명한 전략적 인사이트"
 }
-priority: 최우선|2순위|3순위 / timeframe: 단기|중기|장기 / priority채널: 높음|중간|낮음 / category: 인지|획득|유지|수익 / score 0~100`;
+priority: 최우선|2순위|3순위 / timeframe: 단기|중기|장기 / priority채널: 높음|중간|낮음 / category: 인지|획득|유지|수익 / score 0~100\n\n주의: JSON 문자열 값 안에 큰따옴표를 절대 사용하지 마세요. 작은따옴표 또는 다른 표현으로 대체하세요. 줄바꿈 문자도 사용 금지.`;
 
 let apiKey=sessionStorage.getItem('bi_key')||'',currentData=null,activeTab=0;
 const TABS=['개요','문제 재정의','세그먼트','기회 매트릭스','경쟁사 맹점','전략 방향','마케팅 전략'];
@@ -278,41 +279,12 @@ function toggleVis(){const i=document.getElementById('api-key-input'),b=document
 function saveKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('API 키를 입력하세요.');return;}sessionStorage.setItem('bi_key',k);apiKey=k;showApp();document.getElementById('q').focus();}
 document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey();});
 
-function sanitizeJson(str) {
-  // Fix unescaped quotes inside JSON string values
-  // Strategy: parse character by character, tracking string context
-  let result = '';
-  let inStr = false, esc = false, prev = '';
-  for (let i = 0; i < str.length; i++) {
-    const c = str[i];
-    if (esc) { result += c; esc = false; prev = c; continue; }
-    if (c === '\\') { result += c; if (inStr) esc = true; prev = c; continue; }
-    if (c === '"') {
-      if (!inStr) { inStr = true; result += c; }
-      else {
-        // Peek ahead: if next non-space is ,  } ] or : then this closes the string
-        let j = i + 1;
-        while (j < str.length && str[j] === ' ') j++;
-        const next = str[j];
-        if (next === ',' || next === '}' || next === ']' || next === ':' || next === '\n') {
-          inStr = false; result += c;
-        } else {
-          // Unescaped quote inside string — escape it
-          result += '\\"';
-        }
-      }
-      prev = c; continue;
-    }
-    result += c; prev = c;
-  }
-  return result;
-}
-
-function repairJson(raw) {
+function aggressiveJsonClean(raw) {
+  // Step 1: strip markdown fences
   let s = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-  // Find outermost JSON object
+  // Step 2: find outermost { }
   const st = s.indexOf('{');
-  if (st === -1) throw new Error('JSON 없음');
+  if (st === -1) throw new Error('JSON 블록 없음');
   let depth = 0, inStr = false, esc = false, end = -1;
   for (let i = st; i < s.length; i++) {
     const c = s[i];
@@ -323,13 +295,70 @@ function repairJson(raw) {
     if (c === '{') depth++;
     else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
   }
-  const candidate = end !== -1 ? s.slice(st, end + 1) : s.slice(st);
-  // Try direct parse first
+  let candidate = end !== -1 ? s.slice(st, end + 1) : s.slice(st);
+  // Step 3: direct parse
   try { return JSON.parse(candidate); } catch (_) {}
-  // Try sanitized version
-  try { return JSON.parse(sanitizeJson(candidate)); } catch (_) {}
-  // Auto-close truncated JSON
-  let t = candidate.replace(/,\s*$/, '').replace(/:\s*$/, ': ""');
+  // Step 4: fix common issues — remove literal newlines/tabs inside strings, fix unescaped quotes
+  let cleaned = '';
+  inStr = false; esc = false;
+  for (let i = 0; i < candidate.length; i++) {
+    const c = candidate[i];
+    if (esc) { cleaned += c; esc = false; continue; }
+    if (c === '\\') { cleaned += c; if (inStr) esc = true; continue; }
+    if (c === '"') { inStr = !inStr; cleaned += c; continue; }
+    if (inStr) {
+      if (c === '\n' || c === '\r') { cleaned += ' '; continue; }
+      if (c === '\t') { cleaned += ' '; continue; }
+      // Check for unescaped quote: look ahead to see if context suggests it's mid-string
+      cleaned += c;
+    } else {
+      cleaned += c;
+    }
+  }
+  try { return JSON.parse(cleaned); } catch (_) {}
+  // Step 5: aggressive — replace all " inside string values with escaped version
+  // Use a state machine to identify string boundaries precisely
+  let result = '';
+  let state = 'OUT'; // OUT, KEY, COLON, VAL
+  let buf = '';
+  let i = 0;
+  while (i < cleaned.length) {
+    const c = cleaned[i];
+    if (state === 'OUT' || state === 'KEY' || state === 'VAL') {
+      if (c === '"') {
+        // Start of string — collect until closing quote
+        let str = '"';
+        i++;
+        let innerEsc = false;
+        while (i < cleaned.length) {
+          const sc = cleaned[i];
+          if (innerEsc) { str += sc; innerEsc = false; i++; continue; }
+          if (sc === '\\') { str += sc; innerEsc = true; i++; continue; }
+          if (sc === '"') {
+            // Check if this really closes the string
+            let j = i + 1;
+            while (j < cleaned.length && (cleaned[j] === ' ' || cleaned[j] === '\t')) j++;
+            const nx = cleaned[j];
+            if (nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '\n' || nx === '\r' || j >= cleaned.length) {
+              str += '"'; i++; break;
+            } else {
+              // Unescaped interior quote — escape it
+              str += '\\"'; i++; continue;
+            }
+          }
+          str += sc; i++;
+        }
+        result += str;
+        continue;
+      } else {
+        result += c;
+      }
+    }
+    i++;
+  }
+  try { return JSON.parse(result); } catch (_) {}
+  // Step 6: truncation recovery
+  let t = cleaned.replace(/,\s*$/, '').replace(/:\s*$/, ': ""');
   let br = 0, bk = 0; inStr = false; esc = false;
   for (const c of t) {
     if (esc) { esc = false; continue; }
@@ -342,8 +371,11 @@ function repairJson(raw) {
   if (inStr) t += '"';
   t += ']'.repeat(Math.max(0, bk));
   t += '}'.repeat(Math.max(0, br));
-  try { return JSON.parse(t); } catch (_) {}
-  try { return JSON.parse(sanitizeJson(t)); } catch (e) { throw new Error('JSON 파싱 실패: ' + e.message); }
+  try { return JSON.parse(t); } catch (e) { throw new Error('JSON 파싱 실패: ' + e.message); }
+}
+
+function repairJson(raw) {
+  return aggressiveJsonClean(raw);
 }
 async function fetchBrandIntel(brandName){const fp=SYSTEM_PROMPT+'\n\n---\n다음 브랜드를 분석하세요: '+brandName+'\n순수 JSON만 반환하세요.';let lastErr=null;for(const model of MODELS){setStatus(model+' 분석 중...');const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;let res,data;try{res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:fp}]}],generationConfig:{temperature:.3,maxOutputTokens:8192}})});data=await res.json();}catch(e){throw new Error('네트워크 오류: https:// 주소에서 실행해주세요. ('+e.message+')');}if(!res.ok){const msg=data?.error?.message||('HTTP '+res.status);if((res.status===400||res.status===401||res.status===403)&&(msg.toLowerCase().includes('api key')||msg.toLowerCase().includes('invalid')))throw new Error('API 키 오류: '+msg);console.warn(model,res.status,msg.slice(0,100));lastErr=new Error(msg);continue;}const text=(data?.candidates?.[0]?.content?.parts||[]).filter(p=>typeof p.text==='string').map(p=>p.text).join('').trim();if(!text){lastErr=new Error('응답 없음 ('+data?.candidates?.[0]?.finishReason+')');continue;}return repairJson(text);}throw new Error('분석 실패: '+(lastErr?.message||'모든 모델 소진'));}
 
