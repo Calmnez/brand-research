@@ -278,8 +278,73 @@ function toggleVis(){const i=document.getElementById('api-key-input'),b=document
 function saveKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('API 키를 입력하세요.');return;}sessionStorage.setItem('bi_key',k);apiKey=k;showApp();document.getElementById('q').focus();}
 document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey();});
 
-function repairJson(raw){const s=raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```\s*$/i,'').trim();const st=s.indexOf('{');if(st===-1)throw new Error('JSON 없음');let depth=0,inStr=false,esc=false,end=-1;for(let i=st;i<s.length;i++){const c=s[i];if(esc){esc=false;continue;}if(c==='\\'&&inStr){esc=true;continue;}if(c==='"'){inStr=!inStr;continue;}if(inStr)continue;if(c==='{')depth++;else if(c==='}'){depth--;if(depth===0){end=i;break;}}}if(end!==-1){try{return JSON.parse(s.slice(st,end+1));}catch(_){}}let t=end!==-1?s.slice(st,end+1):s.slice(st);t=t.replace(/,\s*$/,'').replace(/:\s*$/,': ""');let br=0,bk=0;inStr=false;esc=false;for(const c of t){if(esc){esc=false;continue;}if(c==='\\'&&inStr){esc=true;continue;}if(c==='"'){inStr=!inStr;continue;}if(inStr)continue;if(c==='{')br++;else if(c==='}')br--;else if(c==='[')bk++;else if(c===']')bk--;}if(inStr)t+='"';t+=']'.repeat(Math.max(0,bk));t+='}'.repeat(Math.max(0,br));return JSON.parse(t);}
+function sanitizeJson(str) {
+  // Fix unescaped quotes inside JSON string values
+  // Strategy: parse character by character, tracking string context
+  let result = '';
+  let inStr = false, esc = false, prev = '';
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (esc) { result += c; esc = false; prev = c; continue; }
+    if (c === '\\') { result += c; if (inStr) esc = true; prev = c; continue; }
+    if (c === '"') {
+      if (!inStr) { inStr = true; result += c; }
+      else {
+        // Peek ahead: if next non-space is ,  } ] or : then this closes the string
+        let j = i + 1;
+        while (j < str.length && str[j] === ' ') j++;
+        const next = str[j];
+        if (next === ',' || next === '}' || next === ']' || next === ':' || next === '\n') {
+          inStr = false; result += c;
+        } else {
+          // Unescaped quote inside string — escape it
+          result += '\\"';
+        }
+      }
+      prev = c; continue;
+    }
+    result += c; prev = c;
+  }
+  return result;
+}
 
+function repairJson(raw) {
+  let s = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  // Find outermost JSON object
+  const st = s.indexOf('{');
+  if (st === -1) throw new Error('JSON 없음');
+  let depth = 0, inStr = false, esc = false, end = -1;
+  for (let i = st; i < s.length; i++) {
+    const c = s[i];
+    if (esc) { esc = false; continue; }
+    if (c === '\\' && inStr) { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  const candidate = end !== -1 ? s.slice(st, end + 1) : s.slice(st);
+  // Try direct parse first
+  try { return JSON.parse(candidate); } catch (_) {}
+  // Try sanitized version
+  try { return JSON.parse(sanitizeJson(candidate)); } catch (_) {}
+  // Auto-close truncated JSON
+  let t = candidate.replace(/,\s*$/, '').replace(/:\s*$/, ': ""');
+  let br = 0, bk = 0; inStr = false; esc = false;
+  for (const c of t) {
+    if (esc) { esc = false; continue; }
+    if (c === '\\' && inStr) { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{') br++; else if (c === '}') br--;
+    else if (c === '[') bk++; else if (c === ']') bk--;
+  }
+  if (inStr) t += '"';
+  t += ']'.repeat(Math.max(0, bk));
+  t += '}'.repeat(Math.max(0, br));
+  try { return JSON.parse(t); } catch (_) {}
+  try { return JSON.parse(sanitizeJson(t)); } catch (e) { throw new Error('JSON 파싱 실패: ' + e.message); }
+}
 async function fetchBrandIntel(brandName){const fp=SYSTEM_PROMPT+'\n\n---\n다음 브랜드를 분석하세요: '+brandName+'\n순수 JSON만 반환하세요.';let lastErr=null;for(const model of MODELS){setStatus(model+' 분석 중...');const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;let res,data;try{res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:fp}]}],generationConfig:{temperature:.3,maxOutputTokens:8192}})});data=await res.json();}catch(e){throw new Error('네트워크 오류: https:// 주소에서 실행해주세요. ('+e.message+')');}if(!res.ok){const msg=data?.error?.message||('HTTP '+res.status);if((res.status===400||res.status===401||res.status===403)&&(msg.toLowerCase().includes('api key')||msg.toLowerCase().includes('invalid')))throw new Error('API 키 오류: '+msg);console.warn(model,res.status,msg.slice(0,100));lastErr=new Error(msg);continue;}const text=(data?.candidates?.[0]?.content?.parts||[]).filter(p=>typeof p.text==='string').map(p=>p.text).join('').trim();if(!text){lastErr=new Error('응답 없음 ('+data?.candidates?.[0]?.finishReason+')');continue;}return repairJson(text);}throw new Error('분석 실패: '+(lastErr?.message||'모든 모델 소진'));}
 
 let phaseTimer=null;
