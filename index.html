@@ -476,6 +476,6 @@ function renderTab6(d){
   (ms.kpis||[]).forEach(kpi=>{const kr=el('div','kpi-row');const kl=el('div');const kb=el('div','kpi-cat');kb.textContent=kpi.category;kb.style.cssText='background:'+CAT_C[kpi.category]+'18;color:'+CAT_C[kpi.category]+';border:1px solid '+CAT_C[kpi.category]+'30';kl.appendChild(kb);const km=el('div','kpi-metric');km.textContent=kpi.metric;kl.appendChild(km);kr.appendChild(kl);const kt=el('div','kpi-target');kt.style.color=CAT_C[kpi.category]||'#888';kt.textContent=kpi.target;kr.appendChild(kt);kc.appendChild(kr);});
   g.appendChild(kc);p.appendChild(g);
 }
-<\/script>
+</script>
 </body>
 </html>
