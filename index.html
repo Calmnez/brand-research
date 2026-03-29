@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -205,6 +206,68 @@
     .issue-child-detail{font-size:11px;color:#777;line-height:1.55;}
     #reset-btn{display:block;margin:40px auto 0;background:none;border:1px solid #d4d1c7;color:#aaa;font-family:inherit;font-size:11px;padding:9px 22px;cursor:pointer;border-radius:5px;transition:all .15s;}
     #reset-btn:hover{border-color:#b8a88a;color:#555;}
+    #ppt-btn{display:block;margin:12px auto 0;background:#1a1a17;border:none;color:#fff;font-family:inherit;font-size:12px;font-weight:700;padding:11px 28px;cursor:pointer;border-radius:5px;transition:background .2s;letter-spacing:.04em;}
+    #ppt-btn:hover{background:#333;}
+    #ppt-btn:disabled{opacity:.4;cursor:not-allowed;}
+    /* PPT Overlay */
+    #ppt-overlay{display:none;position:fixed;inset:0;background:#111;z-index:9999;flex-direction:column;}
+    #ppt-overlay.show{display:flex;}
+    #ppt-toolbar{background:#0a0a0a;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #222;flex-shrink:0;}
+    #ppt-toolbar .tb-left{display:flex;align-items:center;gap:12px;}
+    #ppt-title{color:#888;font-size:11px;letter-spacing:.1em;}
+    #ppt-counter{color:#555;font-size:11px;font-family:monospace;}
+    .tb-btn{background:none;border:1px solid #333;color:#aaa;font-family:inherit;font-size:11px;padding:5px 14px;cursor:pointer;border-radius:3px;transition:all .15s;}
+    .tb-btn:hover{border-color:#666;color:#fff;}
+    #ppt-close{background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:4px 8px;line-height:1;}
+    #ppt-close:hover{color:#fff;}
+    #ppt-viewport{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:20px;}
+    #ppt-slides{width:100%;max-width:960px;}
+    .slide{display:none;aspect-ratio:16/9;position:relative;overflow:hidden;border-radius:2px;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+    .slide.active{display:block;}
+    /* Cover slide */
+    .slide-cover{background:#0a0a0a;color:#fff;}
+    .slide-cover .geo-lines{position:absolute;inset:0;opacity:.35;}
+    .slide-cover .mcl-top{position:absolute;top:28px;left:0;right:0;text-align:center;font-size:clamp(11px,.9vw,14px);font-weight:800;letter-spacing:.3em;color:#E5612A;}
+    .slide-cover .date-top{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:clamp(9px,.7vw,11px);color:#888;letter-spacing:.15em;}
+    .slide-cover .cover-body{position:absolute;top:50%;left:8%;transform:translateY(-55%);max-width:65%;}
+    .slide-cover .case-label{font-size:clamp(9px,.75vw,12px);color:#aaa;letter-spacing:.12em;margin-bottom:6px;}
+    .slide-cover .brand-name{font-size:clamp(28px,4.5vw,60px);font-weight:900;color:#E5612A;line-height:1;margin-bottom:4px;}
+    .slide-cover .strat-title{font-size:clamp(20px,3vw,40px);font-weight:700;color:#fff;line-height:1.2;}
+    .slide-cover .cover-footer{position:absolute;bottom:0;left:0;right:0;height:22%;background:#E5612A;display:flex;align-items:center;justify-content:flex-end;padding-right:5%;}
+    .slide-cover .logo-box{background:#fff;border-radius:6px;padding:8px 18px;font-size:clamp(12px,1.2vw,18px);font-weight:800;color:#1a1a17;}
+    /* Content slides */
+    .slide-content{background:#fff;color:#1a1a17;}
+    .slide-header{padding:clamp(14px,2%,22px) clamp(18px,3%,32px) 0;display:flex;justify-content:space-between;align-items:flex-start;}
+    .slide-section-name{font-size:clamp(14px,1.6vw,22px);font-weight:800;color:#1a1a17;}
+    .slide-mcl{font-size:clamp(10px,.9vw,13px);color:#aaa;font-weight:700;letter-spacing:.15em;}
+    .slide-rule{height:2px;background:#1a1a17;margin:clamp(8px,1%,12px) clamp(18px,3%,32px) 0;}
+    .slide-body{padding:clamp(10px,1.5%,18px) clamp(18px,3%,32px);}
+    .slide-brand-tag{font-size:clamp(9px,.7vw,11px);color:#E5612A;font-weight:700;letter-spacing:.1em;margin-bottom:clamp(6px,1%,10px);}
+    .slide-headline{font-size:clamp(11px,1.1vw,16px);font-weight:700;color:#1a1a17;line-height:1.55;margin-bottom:clamp(10px,1.5%,16px);border-left:3px solid #E5612A;padding-left:10px;}
+    .slide-headline em{font-style:normal;color:#E5612A;}
+    .slide-cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.5%,16px);}
+    .slide-col-card{background:#f8f8f6;border:1px solid #e8e6e0;border-radius:4px;padding:clamp(8px,1.2%,14px);}
+    .slide-col-title{font-size:clamp(9px,.75vw,11px);font-weight:800;color:#fff;background:#1a1a17;border-radius:2px;padding:2px 8px;display:inline-block;margin-bottom:8px;letter-spacing:.06em;}
+    .slide-col-title.accent{background:#E5612A;}
+    .slide-data-item{font-size:clamp(9px,.8vw,12px);color:#444;line-height:1.6;margin-bottom:5px;padding-left:10px;position:relative;}
+    .slide-data-item::before{content:"▸";position:absolute;left:0;color:#E5612A;font-size:9px;}
+    .slide-data-label{font-size:clamp(8px,.65vw,10px);color:#999;font-style:normal;display:block;margin-bottom:2px;}
+    /* Key Question slide */
+    .slide-kq{background:#fff;display:flex;align-items:stretch;}
+    .slide-kq-body{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:clamp(20px,4%,50px);}
+    .slide-kq-label{font-size:clamp(12px,1.1vw,16px);font-weight:700;margin-bottom:clamp(16px,2.5%,28px);color:#1a1a17;}
+    .slide-kq-text{font-size:clamp(16px,2vw,28px);font-weight:700;line-height:1.65;color:#1a1a17;}
+    .slide-kq-text em{font-style:normal;color:#E5612A;}
+    .slide-kq-footer{font-size:clamp(9px,.75vw,11px);color:#aaa;margin-top:auto;padding-top:clamp(10px,2%,20px);}
+    /* Issue tree */
+    .slide-tree{padding:clamp(8px,1.2%,14px);}
+    .tree-root{background:#1a1a17;color:#fff;border-radius:4px;padding:8px 16px;font-size:clamp(9px,.8vw,12px);font-weight:700;text-align:center;margin-bottom:12px;}
+    .tree-branches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .tree-branch{}
+    .tree-branch-head{background:#E5612A;color:#fff;border-radius:3px;padding:5px 8px;font-size:clamp(8px,.7vw,10px);font-weight:700;text-align:center;margin-bottom:6px;}
+    .tree-child{background:#f8f8f6;border:1px solid #e8e6e0;border-radius:3px;padding:5px 8px;margin-bottom:4px;}
+    .tree-child-title{font-size:clamp(8px,.7vw,10px);font-weight:700;color:#1a1a17;margin-bottom:2px;}
+    .tree-child-detail{font-size:clamp(7px,.6vw,9px);color:#777;line-height:1.4;}
   </style>
 </head>
 <body>
@@ -226,6 +289,9 @@
       </div>
       <button id="start-btn" onclick="saveKey()">분석 시작하기 →</button>
       <div class="key-note">키는 이 브라우저 세션에만 저장됩니다. 서버로 전송되지 않습니다.</div>
+      <div id="back-to-app" style="display:none;text-align:center;margin-top:12px;">
+        <button onclick="showApp()" style="background:none;border:none;color:#b8860b;font-family:inherit;font-size:12px;cursor:pointer;text-decoration:underline;">← 분석 화면으로 돌아가기</button>
+      </div>
     </div>
   </div>
   <div id="app" style="display:none;">
@@ -321,7 +387,13 @@ const MC=['#b8860b','#4fb3f6','#a78bfa','#4ade80'];
 
 window.onload=()=>{buildBars();apiKey?showApp():showKeyScreen();};
 function buildBars(){const b=document.getElementById('bars');for(let i=0;i<36;i++){const d=document.createElement('div');d.className='bar';d.style.cssText=`height:${5+Math.abs(Math.sin(i*.6))*18}px;background:${i%5===0?'#b8860b':'#e2e0d8'};animation:pulse ${.5+(i%6)*.08}s ease-in-out infinite;animation-delay:${i*.03}s`;b.appendChild(d);}}
-function showKeyScreen(){document.getElementById('keyscreen').style.display='flex';document.getElementById('app').style.display='none';}
+function showKeyScreen(){
+  document.getElementById('keyscreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  // Show back button only if there's existing data
+  const backBtn=document.getElementById('back-to-app');
+  if(backBtn) backBtn.style.display=currentData?'block':'none';
+}
 function showApp(){document.getElementById('keyscreen').style.display='none';document.getElementById('app').style.display='block';}
 function toggleVis(){const i=document.getElementById('api-key-input'),b=document.getElementById('toggle-vis');if(i.type==='password'){i.type='text';b.textContent='숨김';}else{i.type='password';b.textContent='표시';}}
 function saveKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('API 키를 입력하세요.');return;}sessionStorage.setItem('bi_key',k);apiKey=k;showApp();document.getElementById('q').focus();}
@@ -457,7 +529,17 @@ async function fetchBrandIntel(brandName) {
 
 let phaseTimer=null;
 function setStatus(t){document.getElementById('status-txt').textContent=t;}
-async function analyze(){const q=document.getElementById('q').value.trim();if(!q)return;document.getElementById('go').disabled=true;document.getElementById('loading').style.display='block';document.getElementById('error-box').style.display='none';document.getElementById('results').style.display='none';document.getElementById('dot').style.animation='pulse .8s infinite';let pi=0;phaseTimer=setInterval(()=>setStatus(PHASES[pi++%PHASES.length]),1600);try{const data=await fetchBrandIntel(q);currentData=data;clearInterval(phaseTimer);document.getElementById('loading').style.display='none';document.getElementById('dot').style.animation='none';activeTab=0;renderResults(data);document.getElementById('results').style.display='block';}catch(e){clearInterval(phaseTimer);document.getElementById('loading').style.display='none';document.getElementById('dot').style.animation='none';const eb=document.getElementById('error-box');eb.textContent='⚠ '+e.message;eb.style.display='block';}finally{document.getElementById('go').disabled=false;}}
+async function analyze(){const q=document.getElementById('q').value.trim();if(!q)return;document.getElementById('go').disabled=true;document.getElementById('loading').style.display='block';document.getElementById('error-box').style.display='none';document.getElementById('results').style.display='none';document.getElementById('dot').style.animation='pulse .8s infinite';let pi=0;phaseTimer=setInterval(()=>setStatus(PHASES[pi++%PHASES.length]),1600);try{const data=await fetchBrandIntel(q);currentData=data;clearInterval(phaseTimer);document.getElementById('loading').style.display='none';document.getElementById('dot').style.animation='none';activeTab=0;renderResults(data);document.getElementById('results').style.display='block';}catch(e){clearInterval(phaseTimer);document.getElementById('loading').style.display='none';document.getElementById('dot').style.animation='none';const eb=document.getElementById('error-box');
+    eb.innerHTML='';
+    const et=document.createElement('span');et.textContent='⚠ '+e.message;eb.appendChild(et);
+    if(e.message.includes('API') || e.message.includes('키') || e.message.includes('네트워크')){
+      const kb=document.createElement('button');
+      kb.textContent=' → API 키 다시 입력';
+      kb.style.cssText='margin-left:12px;background:none;border:1px solid #dc2626;color:#dc2626;font-family:inherit;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;';
+      kb.onclick=function(){sessionStorage.removeItem('bi_key');apiKey='';if(typeof _availableModels!=='undefined')_availableModels=null;eb.style.display='none';showKeyScreen();};
+      eb.appendChild(kb);
+    }
+    eb.style.display='block';}finally{document.getElementById('go').disabled=false;}}
 
 function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e;}
 function tag(lbl,col){const t=el('span','tag');t.textContent=lbl;if(col){t.style.background=col+'18';t.style.borderColor=col+'40';t.style.color=col;}return t;}
@@ -519,6 +601,9 @@ function renderResults(d){
   const rb=el('button');rb.id='reset-btn';rb.textContent='← 새 브랜드 분석';
   rb.onclick=()=>{document.getElementById('results').style.display='none';document.getElementById('error-box').style.display='none';document.getElementById('q').value='';document.getElementById('q').focus();};
   r.appendChild(rb);
+  const pb=el('button');pb.id='ppt-btn';pb.textContent='▶ PPT 생성 (MCL 스타일)';
+  pb.onclick=()=>generatePPT(d);
+  r.appendChild(pb);
 }
 
 function renderTab0(d){
@@ -747,6 +832,372 @@ function renderTab8(d){
   const kc=card();kc.appendChild(secLabel('핵심 KPI'));
   (ms.kpis||[]).forEach(kpi=>{const kr=el('div','kpi-row');const kl=el('div');const kb=el('div','kpi-cat');kb.textContent=kpi.category;kb.style.cssText='background:'+CAT_C[kpi.category]+'18;color:'+CAT_C[kpi.category]+';border:1px solid '+CAT_C[kpi.category]+'30';kl.appendChild(kb);const km=el('div','kpi-metric');km.textContent=kpi.metric;kl.appendChild(km);kr.appendChild(kl);const kt=el('div','kpi-target');kt.style.color=CAT_C[kpi.category]||'#888';kt.textContent=kpi.target;kr.appendChild(kt);kc.appendChild(kr);});
   g.appendChild(kc);p.appendChild(g);
+}
+
+// ── PPT OVERLAY ──────────────────────────────────────────────────────────────
+// Build MCL-style presentation overlay from analysis data
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function highlightKeywords(text, color) {
+  // Bold first keyword phrase in sentence (first comma-delimited segment if long)
+  if (!text) return '';
+  const escaped = esc(text);
+  // Find key noun phrases to highlight — simple heuristic: highlight words after certain patterns
+  return escaped.replace(/([가-힣a-zA-Z0-9]+(?:\s[가-힣a-zA-Z0-9]+){0,3})((?:이|가|은|는|을|를|의|으로|로|에서|에|이다|한다|하며|하고|했다|있다|된다|된다))/g, 
+    (m,p1,p2,offset) => offset < 60 ? `<em>${p1}</em>${p2}` : m);
+}
+
+function geoLines() {
+  // SVG geometric diamond pattern for cover
+  return `<svg class="geo-lines" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <g stroke="#c8611a" stroke-width="0.7" fill="none" opacity="0.5">
+      <line x1="480" y1="0" x2="960" y2="270"/><line x1="480" y1="0" x2="0" y2="270"/>
+      <line x1="480" y1="540" x2="960" y2="270"/><line x1="480" y1="540" x2="0" y2="270"/>
+      <line x1="480" y1="0" x2="480" y2="540"/><line x1="0" y1="270" x2="960" y2="270"/>
+      <line x1="480" y1="80" x2="880" y2="270"/><line x1="480" y1="80" x2="80" y2="270"/>
+      <line x1="480" y1="460" x2="880" y2="270"/><line x1="480" y1="460" x2="80" y2="270"/>
+    </g>
+  </svg>`;
+}
+
+function slideHeader(sectionName) {
+  return `<div class="slide-header"><span class="slide-section-name">${esc(sectionName)}</span><span class="slide-mcl">MCL</span></div><div class="slide-rule"></div>`;
+}
+
+function makeCoverSlide(d) {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+  const stratTitle = d.key_insight ? d.key_insight.slice(0,40) : (d.tagline||'전략 방향성 도출');
+  return `<div class="slide slide-cover">
+    ${geoLines()}
+    <div class="mcl-top">MCL</div>
+    <div class="cover-body">
+      <div class="case-label">MCL CASE STUDY</div>
+      <div class="brand-name">${esc(d.name||'BRAND')}</div>
+      <div class="strat-title">${esc(stratTitle)}</div>
+    </div>
+    <div class="cover-footer">
+      <div class="logo-box">${esc(d.name||'BRAND')}</div>
+    </div>
+  </div>`;
+}
+
+function makeKQSlide(d) {
+  const sc = d.scqa||{};
+  const q = sc.question || d.problem_reframe?.reframe_question || `${esc(d.name)}의 핵심 전략 방향성을 도출하시오.`;
+  // Extract key phrase to highlight (first 20 chars or first clause)
+  const parts = q.split(/(?<=를|을|의|이|가|은|는)/);
+  let highlighted = esc(q);
+  if (parts.length > 1) {
+    highlighted = `<em>${esc(parts[0])}</em>${esc(parts.slice(1).join(''))}`;
+  }
+  return `<div class="slide slide-content slide-kq">
+    ${slideHeader('Case Guide')}
+    <div class="slide-body slide-kq-body">
+      <div class="slide-kq-label">Key Question</div>
+      <div class="slide-kq-text">${highlighted}</div>
+      <div class="slide-kq-footer">다음 내용은 AI 분석 결과입니다. →</div>
+    </div>
+  </div>`;
+}
+
+function makeSituationSlide(d) {
+  const sc = d.scqa||{};
+  const bm = d.brand_metrics||{};
+  const hl = d.recent_highlights||[];
+  const situation = sc.situation || d.market_position || '';
+  const headlineRaw = situation.split('。')[0] || situation.split('.')[0] || situation;
+
+  let col1Items = '';
+  if (bm.market_share) col1Items += `<div class="slide-data-item"><span class="slide-data-label">/시장 점유율/</span>${esc(bm.market_share.value)} — ${esc(bm.market_share.note)}</div>`;
+  if (bm.revenue) col1Items += `<div class="slide-data-item"><span class="slide-data-label">/매출/</span>${esc(bm.revenue.value)} ${esc(bm.revenue.yoy||'')}</div>`;
+  if (bm.users) col1Items += `<div class="slide-data-item"><span class="slide-data-label">/이용자 수/</span>${esc(bm.users.value)} — ${esc(bm.users.note)}</div>`;
+  if (bm.growth) col1Items += `<div class="slide-data-item"><span class="slide-data-label">/성장률/</span>${esc(bm.growth.value)} ${esc(bm.growth.note||'')}</div>`;
+
+  let col2Items = hl.slice(0,3).map(h=>`<div class="slide-data-item"><span class="slide-data-label">/${esc(h.title)}/</span>${esc(h.detail)}</div>`).join('');
+
+  return `<div class="slide slide-content">
+    ${slideHeader('Situation')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${esc(headlineRaw)}</div>
+      <div class="slide-cols">
+        <div class="slide-col-card">
+          <div class="slide-col-title">핵심 지표</div>
+          ${col1Items || '<div class="slide-data-item">데이터 분석 중</div>'}
+        </div>
+        <div class="slide-col-card">
+          <div class="slide-col-title">최근 주요 동향</div>
+          ${col2Items || '<div class="slide-data-item">최근 동향 분석 중</div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function makeComplicationSlide(d) {
+  const sc = d.scqa||{};
+  const pr = d.problem_reframe||{};
+  const comp = sc.complication || pr.real_problem || '';
+  const headlineRaw = (pr.surface_problem || comp).split('.')[0];
+  const swot = d.swot||{};
+
+  let col1Items = (swot.weaknesses||[]).slice(0,3).map(w=>`<div class="slide-data-item">${esc(w)}</div>`).join('');
+  let col2Items = (swot.threats||[]).slice(0,3).map(t=>`<div class="slide-data-item">${esc(t)}</div>`).join('');
+  if (!col1Items) col1Items = `<div class="slide-data-item">${esc(pr.real_problem||comp)}</div>`;
+
+  return `<div class="slide slide-content">
+    ${slideHeader('Complication')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${esc(headlineRaw)}</div>
+      <div class="slide-cols">
+        <div class="slide-col-card">
+          <div class="slide-col-title accent">내부 약점</div>
+          ${col1Items}
+        </div>
+        <div class="slide-col-card">
+          <div class="slide-col-title accent">외부 위협</div>
+          ${col2Items || `<div class="slide-data-item">${esc(pr.stakes||'')}</div>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function makeCompetitorSlide(d) {
+  const comps = d.competitor_blindspots||[];
+  let rows = comps.slice(0,3).map(c=>`
+    <div style="margin-bottom:10px;padding:8px 10px;background:#f8f8f6;border-radius:3px;border-left:3px solid #E5612A;">
+      <div style="font-size:clamp(10px,.9vw,13px);font-weight:800;color:#1a1a17;margin-bottom:3px;">${esc(c.competitor)}</div>
+      <div style="font-size:clamp(8px,.7vw,10px);color:#E5612A;font-weight:700;letter-spacing:.1em;margin-bottom:3px;">BLIND SPOT</div>
+      <div style="font-size:clamp(8px,.72vw,10px);color:#555;line-height:1.5;">${esc((c.blindspot||'').slice(0,100))}</div>
+    </div>`).join('');
+  const headline = `경쟁사 분석을 통해 ${esc(d.name)}의 차별화 기회를 도출하였다.`;
+  return `<div class="slide slide-content">
+    ${slideHeader('자사경쟁사 분석')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${headline}</div>
+      ${rows}
+    </div>
+  </div>`;
+}
+
+function makeIssueTreeSlide(d) {
+  const it = d.issue_tree||{};
+  let branches = (it.branches||[]).slice(0,3).map(b=>{
+    let children = (b.children||[]).slice(0,3).map(c=>`
+      <div class="tree-child">
+        <div class="tree-child-title">${esc(c.issue)}</div>
+        <div class="tree-child-detail">${esc((c.detail||'').slice(0,60))}</div>
+      </div>`).join('');
+    return `<div class="tree-branch">
+      <div class="tree-branch-head">${esc(b.issue)}</div>
+      ${children}
+    </div>`;
+  }).join('');
+
+  return `<div class="slide slide-content">
+    ${slideHeader('이슈 트리')}
+    <div class="slide-body slide-tree">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="tree-root">${esc(it.root||'핵심 문제')}</div>
+      <div class="tree-branches">${branches || '<div style="color:#aaa;font-size:12px;text-align:center;">이슈 트리 데이터 없음</div>'}</div>
+    </div>
+  </div>`;
+}
+
+function makeSegmentSlide(d) {
+  const segs = d.segments||[];
+  let cols = segs.slice(0,3).map((s,i)=>{
+    const col = ['#E5612A','#1a1a17','#666'][i];
+    return `<div class="slide-col-card" style="border-top:3px solid ${col}">
+      <div style="font-size:clamp(10px,.9vw,13px);font-weight:800;color:${col};margin-bottom:6px;">${esc(s.name)}</div>
+      <div style="font-size:clamp(8px,.7vw,10px);display:inline-block;background:${col}18;color:${col};border:1px solid ${col}40;border-radius:2px;padding:1px 6px;margin-bottom:6px;">${esc(s.priority)}</div>
+      <div class="slide-data-item"><span class="slide-data-label">/시장 규모/</span>${esc(s.size?.value||'—')} ${esc(s.size?.note||'')}</div>
+      <div class="slide-data-item"><span class="slide-data-label">/성장률/</span>${esc(s.growth?.value||'—')}</div>
+      <div class="slide-data-item"><span class="slide-data-label">/적합도/</span>${esc(s.fit?.value||'—')}</div>
+      <div style="font-size:clamp(8px,.7vw,10px);color:#666;line-height:1.5;margin-top:4px;">${esc((s.description||'').slice(0,80))}</div>
+    </div>`;
+  }).join('');
+
+  const headline = `${esc(d.name)} 공략을 위한 핵심 타겟 세그먼트를 선정하였다.`;
+  return `<div class="slide slide-content">
+    ${slideHeader('타겟 소비자 분석')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${headline}</div>
+      <div class="slide-cols" style="grid-template-columns:${segs.length>=3?'1fr 1fr 1fr':'1fr 1fr'}">${cols}</div>
+    </div>
+  </div>`;
+}
+
+function makeStrategySlide(d) {
+  const strats = d.strategic_directions||[];
+  let items = strats.slice(0,3).map((s,i)=>{
+    const colors = ['#E5612A','#1a1a17','#555'];
+    const col = colors[i];
+    const firstStep = s.steps?.[0];
+    return `<div style="margin-bottom:8px;padding:10px 12px;background:#f8f8f6;border-radius:3px;border-left:3px solid ${col}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <div style="width:20px;height:20px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">${i+1}</div>
+        <div style="font-size:clamp(10px,.9vw,13px);font-weight:800;color:#1a1a17">${esc(s.label)}</div>
+      </div>
+      <div style="font-size:clamp(8px,.72vw,10px);color:#555;line-height:1.5">${esc((s.rationale||'').slice(0,80))}</div>
+      ${firstStep?`<div style="font-size:clamp(8px,.68vw,10px);color:${col};font-weight:700;margin-top:4px;">→ ${esc(firstStep.step)}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const headline = `${esc(d.name)} 성장을 위한 ${strats.length}가지 전략 방향성을 도출하였다.`;
+  return `<div class="slide slide-content">
+    ${slideHeader('전략 방향 도출')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${headline}</div>
+      ${items}
+    </div>
+  </div>`;
+}
+
+function makeMarketingSlide(d) {
+  const ms = d.marketing_strategy||{};
+  const channels = ms.channels||[];
+  const kpis = ms.kpis||[];
+
+  let chItems = channels.slice(0,4).map(c=>`
+    <div class="slide-data-item">
+      <span style="display:inline-block;font-size:clamp(7px,.6vw,9px);background:${c.priority==='높음'?'#E5612A':'#888'};color:#fff;border-radius:2px;padding:0 4px;margin-right:4px;">${esc(c.priority)}</span>
+      <strong>${esc(c.channel)}</strong> — ${esc((c.role||'').slice(0,40))}
+    </div>`).join('');
+
+  let kpiItems = kpis.slice(0,4).map(k=>`
+    <div class="slide-data-item"><span class="slide-data-label">/${esc(k.category)}/</span><strong>${esc(k.metric)}</strong> → ${esc(k.target)}</div>`).join('');
+
+  return `<div class="slide slide-content">
+    ${slideHeader('커뮤니케이션 및 마케팅 전략')}
+    <div class="slide-body">
+      <div class="slide-brand-tag">${esc(d.name)}</div>
+      <div class="slide-headline">${esc((ms.core_message||'').slice(0,80))}</div>
+      <div class="slide-cols">
+        <div class="slide-col-card">
+          <div class="slide-col-title">채널 전략</div>
+          ${chItems}
+        </div>
+        <div class="slide-col-card">
+          <div class="slide-col-title accent">핵심 KPI</div>
+          ${kpiItems}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function makeInsightSlide(d) {
+  const sc = d.scqa||{};
+  const answer = sc.answer || d.key_insight || '';
+  return `<div class="slide slide-content slide-kq">
+    ${slideHeader('전략적 핵심 인사이트')}
+    <div class="slide-body slide-kq-body">
+      <div class="slide-kq-label">★ Answer — Strategic Thesis</div>
+      <div class="slide-kq-text" style="font-size:clamp(13px,1.5vw,22px)">${esc(answer)}</div>
+    </div>
+  </div>`;
+}
+
+let currentSlide = 0;
+let totalSlides = 0;
+
+function generatePPT(d) {
+  // Build all slides
+  const slideHTMLs = [
+    makeCoverSlide(d),
+    makeKQSlide(d),
+    makeSituationSlide(d),
+    makeComplicationSlide(d),
+    makeIssueTreeSlide(d),
+    makeSegmentSlide(d),
+    makeCompetitorSlide(d),
+    makeStrategySlide(d),
+    makeMarketingSlide(d),
+    makeInsightSlide(d),
+  ];
+  totalSlides = slideHTMLs.length;
+  currentSlide = 0;
+
+  // Build overlay
+  let overlay = document.getElementById('ppt-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ppt-overlay';
+    overlay.innerHTML = `
+      <div id="ppt-toolbar">
+        <div class="tb-left">
+          <span id="ppt-title">MCL STYLE PPT — ${esc(d.name)}</span>
+          <button class="tb-btn" onclick="pptPrev()">← 이전</button>
+          <button class="tb-btn" onclick="pptNext()">다음 →</button>
+          <span id="ppt-counter">1 / ${totalSlides}</span>
+        </div>
+        <button id="ppt-close" onclick="closePPT()">✕</button>
+      </div>
+      <div id="ppt-viewport">
+        <div id="ppt-slides"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+  } else {
+    overlay.querySelector('#ppt-title').textContent = 'MCL STYLE PPT — ' + (d.name||'');
+    overlay.querySelector('#ppt-counter').textContent = '1 / ' + totalSlides;
+  }
+
+  const slidesContainer = overlay.querySelector('#ppt-slides') || document.getElementById('ppt-slides');
+  slidesContainer.innerHTML = slideHTMLs.map((html,i)=>`<div class="slide ${i===0?'active':''}" data-idx="${i}">${html.replace(/^<div[^>]*>/,'').replace(/<\/div>\s*$/,'')}</div>`).join('');
+
+  // Actually set inner HTML per slide properly
+  slidesContainer.innerHTML = '';
+  slideHTMLs.forEach((html,i) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'slide' + (i===0?' active':'');
+    wrapper.setAttribute('data-idx', i);
+    wrapper.innerHTML = html;
+    // Replace outer div with wrapper
+    const inner = wrapper.querySelector('.slide');
+    if (inner) {
+      inner.className = inner.className + (i===0?' active':'');
+      slidesContainer.appendChild(inner);
+    } else {
+      slidesContainer.appendChild(wrapper);
+    }
+  });
+
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // Keyboard nav
+  document.onkeydown = function(e) {
+    if (!overlay.classList.contains('show')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') pptNext();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') pptPrev();
+    if (e.key === 'Escape') closePPT();
+  };
+}
+
+function pptGoTo(idx) {
+  const slides = document.querySelectorAll('#ppt-slides .slide');
+  if (idx < 0 || idx >= slides.length) return;
+  slides.forEach(s => s.classList.remove('active'));
+  slides[idx].classList.add('active');
+  currentSlide = idx;
+  const counter = document.getElementById('ppt-counter');
+  if (counter) counter.textContent = (idx+1) + ' / ' + slides.length;
+}
+function pptNext() { pptGoTo(currentSlide + 1); }
+function pptPrev() { pptGoTo(currentSlide - 1); }
+function closePPT() {
+  const ov = document.getElementById('ppt-overlay');
+  if (ov) ov.classList.remove('show');
+  document.body.style.overflow = '';
+  document.onkeydown = null;
 }
 </script>
 </body>
